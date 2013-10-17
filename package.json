@@ -1,0 +1,39 @@
+{
+  "name": "pubsub",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "connect-assets": "2.5.x",
+    "connect-ensure-login": "0.1.x",
+    "connect-flash": "0.1.x",
+    "connect-mongo": "git+https://github.com/llun/connect-mongo.git",
+    "express": "3.x",
+    "jade": "0.x",
+    "hiredis": "0.1.x",
+    "less": "1.4.1",
+    "mongoose": "3.x",
+    "passport": "0.1.x",
+    "passport-local": "0.1.x",
+    "passport-http-bearer": "0.2.x",
+    "passport-oauth2-client-password": "0.1.x",
+    "q": "0.9.x",
+    "redis": "0.8.x",
+    "scrypt": "1.x",
+    "lodash": "2.x"
+  },
+  "devDependencies": {
+    "chai": "1.5.x",
+    "sinon": "1.6.x",
+    "sinon-chai": "2.3.x",
+    "chai-as-promised": "3.2.x",
+    "mocha-as-promised": "1.2.x",
+    "mocha": "1.x"
+  },
+  "engines": {
+    "node": "0.10.x",
+    "npm": "1.x"
+  },
+  "scripts": {
+    "start": "node app"
+  }
+}
