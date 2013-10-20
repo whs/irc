@@ -46,7 +46,13 @@ primus.on('connection', function (spark) {
 
   spark.on('data', function (data) {
 
+    if (data.action == 'subscribe') {
+      if (!channels[data.room]) {
+        channels[data.room] = [];
+      }
 
+      channels[data.room].push(spark);
+    }
 
   });
 
