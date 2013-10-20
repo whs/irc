@@ -1,0 +1,7 @@
+/public/*
+/views/*
+/.git/*
+/spec/*
+/assets/*
+
+*.log

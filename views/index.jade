@@ -1,5 +1,31 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  #chat(ng-app='chat')
+    script(type='text/ng-template', id='login.html')
+      .row
+        .small-12.large-6.large-centered.columns
+          form(ng-submit='login()')
+            fieldset
+              legend Login
+
+              input(type='text',placeholder='chat name',ng-model='user',required)
+              input(type='text',placeholder='room name',ng-model='room',required)
+              button.small.submit Login
+
+    script(type='text/ng-template', id='chat.html')
+      .row.full-width
+        .small-12.columns
+          h1 Room: {{room}}
+      .row.full-width
+        .small-12.columns
+          ul(ng-repeat='message in messages')
+            li {{message}}
+      .row.full-width
+        .small-8.columns
+          input(type='text',ng-model='message')
+        .small-4.columns
+          button.small(ng-click='send()') Send
+
+    #view(ng-view)
+
