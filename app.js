@@ -45,13 +45,24 @@ var channels = {};
 primus.on('connection', function (spark) {
 
   spark.on('data', function (data) {
-
+    console.log ('client: ', data);
+    var self = this;
     if (data.action == 'subscribe') {
       if (!channels[data.room]) {
         channels[data.room] = [];
       }
 
       channels[data.room].push(spark);
+    }
+    else if (data.action == 'broadcast') {
+      if (data.room && channels[data.room]) {
+        var channel = channels[data.room];
+        channel.forEach(function (spark) {
+          if (spark.id !== self.id) {
+            spark.write(data);
+          }
+        });
+      }
     }
 
   });

@@ -46,15 +46,23 @@ angular.module('chat', [ 'ngRoute' ])
       $scope.room = state.room;
 
       var primus = Primus.connect();
+      primus.write({ action: 'subscribe', room: $scope.room });
       primus.on('data', function message(data) {
-        $scope.messages.push(data); 
+        $scope.messages.push(data.from + ': ' + data.message); 
+        $scope.$apply();
       });
 
       $scope.messages = [];
       $scope.send = function () {
         $scope.messages.push(state.user + ': ' + $scope.message);
-        primus.write($scope.message);
+        primus.write({ action: 'broadcast', room: $scope.room, from: state.user, message: $scope.message });
         $scope.message = '';
       }
+      $scope.keypress = function (event) {
+        if (event.keyCode === 13) {
+          $scope.send();
+        }
+      }
+
     }]);
   
