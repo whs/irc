@@ -63,6 +63,9 @@ primus.on('connection', function (spark) {
       connection.addListener('message', function (from, room, message) {
         spark.write({ from: from, room: room, message: message });
       });
+      connection.addListener('error', function (message) {
+        console.log ('error: ' + message);
+      });
 
     }
     else if (data.action === 'say') {
