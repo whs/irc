@@ -8,45 +8,29 @@ angular.module('chat', [ 'ngRoute' ])
       .otherwise({ redirectTo: '/login' });
   }])
   .factory('state', function () {
-    return { user: '', room: '' };
+    return { user: '', room: '', server: '' };
   })
   .controller('Login', [ '$scope', '$location', 'state', 
     function ($scope, $location, state) {
 
-      if (window.localStorage) {
-        $scope.user = localStorage.user;
-        $scope.room = localStorage.room;
-      }
-
-      if (!S($scope.user).isEmpty() && !S($scope.room).isEmpty()) {
-        state.user = $scope.user;
-        state.room = $scope.room;
-        $location.path('/chat');
-        return;
-      }
-
       $scope.login = function () {
 
-        if (window.localStorage) {
-          localStorage.user = $scope.user;
-          localStorage.room = $scope.room;
-        }
-
         state.user = $scope.user;
         state.room = $scope.room;
+        state.server = $scope.server;
         $location.path('/chat');
       }
     }])
   .controller('Chat', [ '$scope', '$location', 'state',
     function ($scope, $location, state) {
-      if (!state.user || !state.room) {
+      if (!state.user || !state.room || !state.server) {
         $location.path('/login');
       }
 
       $scope.room = state.room;
 
       var primus = Primus.connect();
-      primus.write({ action: 'subscribe', room: $scope.room });
+      primus.write({ action: 'connect', server: state.server, room: state.room, user: state.user });
       primus.on('data', function message(data) {
         $scope.messages.push(data.from + ': ' + data.message); 
         $scope.$apply();
@@ -55,7 +39,7 @@ angular.module('chat', [ 'ngRoute' ])
       $scope.messages = [];
       $scope.send = function () {
         $scope.messages.push(state.user + ': ' + $scope.message);
-        primus.write({ action: 'broadcast', room: $scope.room, from: state.user, message: $scope.message });
+        primus.write({ action: 'say', room: $scope.room, message: $scope.message });
         $scope.message = '';
       }
       $scope.keypress = function (event) {

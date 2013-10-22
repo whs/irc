@@ -6,8 +6,10 @@
     "connect-assets": "2.5.x",
     "engine.io": "0.7.x",
     "express": "3.x",
+    "irc": "git+https://github.com/martynsmith/node-irc.git",
     "jade": "0.x",
     "less": "1.4.1",
+    "mongoose": "3.x",
     "primus": "1.4.x"
   },
   "devDependencies": {

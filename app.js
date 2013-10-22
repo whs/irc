@@ -9,6 +9,7 @@ var user = require('./routes/user');
 
 var http = require('http')
   , path = require('path')
+  , irc = require('irc')
   , Primus = require('primus');
 
 var app = express();
@@ -40,33 +41,45 @@ server.listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });
 
-var channels = {};
+var clients = {};
+var clientCount = 0;
 
 primus.on('connection', function (spark) {
 
+  clientCount++;
+  console.log ('Spark ' + spark.id + ' is connected');
+  console.log ('Total client: ' + clientCount);
+  clients[spark.id] = { spark: spark, irc: null };
   spark.on('data', function (data) {
-    console.log ('client: ', data);
     var self = this;
-    if (data.action == 'subscribe') {
-      if (!channels[data.room]) {
-        channels[data.room] = [];
-      }
 
-      channels[data.room].push(spark);
+    if (data.action === 'connect') {
+      var room = data.room;
+      var user = data.user;
+      var server = data.server;
+
+      var connection = new irc.Client(server, user, { channels: [ room ] });
+      clients[spark.id].irc = connection;
+      connection.addListener('message', function (from, room, message) {
+        spark.write({ from: from, room: room, message: message });
+      });
+
     }
-    else if (data.action == 'broadcast') {
-      if (data.room && channels[data.room]) {
-        var channel = channels[data.room];
-        channel.forEach(function (spark) {
-          if (spark.id !== self.id) {
-            spark.write(data);
-          }
-        });
-      }
+    else if (data.action === 'say') {
+      var connection = clients[spark.id].irc;
+      connection.say(data.room, data.message);
     }
 
   });
-
+});
+primus.on('disconnection', function (spark) {
+  if (clients[spark.id].irc) {
+    clients[spark.id].irc.disconnect('llunchat: Client close browser');
+  }
+  delete clients[spark.id];
+  clientCount--;
+  console.log ('Spark ' + spark.id + ' is disconnected');
+  console.log ('Total client: ' + clientCount);
 });
 
 primus.save(__dirname +'/assets/js/libs/primus.js');
