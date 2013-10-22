@@ -34,7 +34,7 @@ app.get('/', routes.index);
 app.get('/users', user.list);
 
 var server = http.createServer(app)
-  , primus = new Primus(server, {});
+  , primus = new Primus(server, { transformer: 'engine.io' });
 
 server.listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
@@ -69,8 +69,5 @@ primus.on('connection', function (spark) {
 
 });
 
-primus.on('disconnection', function (spark) {
-  // the spark that disconnected
-});
-
 primus.save(__dirname +'/assets/js/libs/primus.js');
+
