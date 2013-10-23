@@ -61,7 +61,13 @@ primus.on('connection', function (spark) {
       var connection = new irc.Client(server, user, { channels: [ room ] });
       clients[spark.id].irc = connection;
       connection.addListener('message', function (from, room, message) {
-        spark.write({ from: from, room: room, message: message });
+        spark.write({ action: 'message', from: from, room: room, message: message });
+      });
+      connection.addListener('names', function (room, nicks) {
+        spark.write({ action: 'names', room: room, nicks: nicks });
+      });
+      connection.addListener('nick', function (oldName, newName, room) {
+        spark.write({ action: 'nick', room: room, oldname: oldName, newname: newName });
       });
       connection.addListener('error', function (message) {
         console.log ('error: ' + message);

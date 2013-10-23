@@ -30,17 +30,30 @@ angular.module('chat', [ 'ngRoute' ])
       $scope.room = state.room;
 
       var primus = Primus.connect();
-      primus.write({ action: 'connect', server: state.server, room: state.room, user: state.user });
-      primus.on('data', function message(data) {
-        $scope.messages.push(data.from + ': ' + data.message); 
-        $scope.$apply();
-      });
+      //primus.write({ action: 'connect', server: state.server, room: state.room, user: state.user });
+      //primus.on('data', function message(data) {
+      //  if (data.action === 'message') {
+      //    $scope.messages.push(data.from + ': ' + data.message); 
+      //    $scope.$apply();
+      //  }
+      //  else if (data.action === 'names') {
+      //    $scope.members = $scope.members.concat(data.nicks);
+      //    $scope.$apply();
+      //  }
+      //});
+
+      $scope.joining = false;
 
       $scope.messages = [];
+      $scope.members = [];
       $scope.send = function () {
-        $scope.messages.push(state.user + ': ' + $scope.message);
-        primus.write({ action: 'say', room: $scope.room, message: $scope.message });
+        if (S($scope.message).isEmpty()) return;
+
+        $scope.messages.push({ time: moment(new Date()).format('hh:mm'), user: state.user, text: $scope.message });
+        //primus.write({ action: 'say', room: $scope.room, message: $scope.message });
         $scope.message = '';
+        var element = document.querySelector('.conversations');
+        element.scrollTop = element.scrollHeight;
       }
       $scope.keypress = function (event) {
         if (event.keyCode === 13) {
