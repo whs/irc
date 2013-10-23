@@ -24,12 +24,15 @@ block content
                 span.from {{message.user}}
                 span.text {{message.text}}
           .small-4.columns.members
+            ul
+              li(ng-repeat='(name, options) in members')
+                span.name {{name}}
       .inputbox
         .row
           .small-10.columns
-            input(type='text',ng-model='message',ng-keypress='keypress($event)',ng-disabled='{{scope.joining}}')
+            input(type='text',ng-model='message',ng-keypress='keypress($event)',ng-disabled='joining')
           .small-2.columns
-            button.small.small-12(ng-click='send()',ng-disabled='{{scope.joining}}') Send
+            button.small.small-12(ng-click='send()',ng-disabled='joining') Send
 
     #view(ng-view)
 

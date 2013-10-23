@@ -58,8 +58,15 @@ primus.on('connection', function (spark) {
       var user = data.user;
       var server = data.server;
 
-      var connection = new irc.Client(server, user, { channels: [ room ] });
+      var connection = new irc.Client(server, user, { 
+        userName: 'llunchat',
+        realName: 'llunchat IRC client',
+        channels: [ room ] 
+      });
       clients[spark.id].irc = connection;
+      connection.addListener('join', function (room, nick) {
+        spark.write({ action: 'joined', room: room });
+      });
       connection.addListener('message', function (from, room, message) {
         spark.write({ action: 'message', from: from, room: room, message: message });
       });
