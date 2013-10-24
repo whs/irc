@@ -35,7 +35,7 @@ app.get('/', routes.index);
 app.get('/users', user.list);
 
 var server = http.createServer(app)
-  , primus = new Primus(server, { transformer: 'engine.io' });
+  , primus = new Primus(server, { transformer: 'browserchannel' });
 
 server.listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));

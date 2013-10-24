@@ -4,13 +4,15 @@
   "private": true,
   "dependencies": {
     "connect-assets": "2.5.x",
+    "browserchannel": "1.0.x",
     "engine.io": "0.7.x",
     "express": "3.x",
     "irc": "git+https://github.com/martynsmith/node-irc.git",
     "jade": "0.x",
     "less": "1.4.1",
     "mongoose": "3.x",
-    "primus": "1.4.x"
+    "primus": "1.4.x",
+    "socket.io": "0.9.x"
   },
   "devDependencies": {
     "chai": "1.5.x",
