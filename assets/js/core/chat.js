@@ -79,7 +79,7 @@ angular.module('chat', [ 'ngRoute' ])
       $scope.send = function () {
         if (S($scope.message).isEmpty()) return;
 
-        var message = S($scope.message).trim();
+        var message = S($scope.message).trim().s;
         if (S(message).startsWith('/nick')) {
           var args = message.split(' ');
           primus.write({ action: 'command', arguments: args });
