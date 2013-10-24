@@ -32,16 +32,28 @@ angular.module('chat', [ 'ngRoute' ])
       var primus = Primus.connect();
       primus.write({ action: 'connect', server: state.server, room: state.room, user: state.user });
       primus.on('data', function message(data) {
-        if (data.action === 'joined') {
-          $scope.messages.push({ time: moment(new Date()).format('hh:mm'), user: state.user, text: 'Joined ' + state.room }); 
-          $scope.joining = false;
+        if (data.action === 'join') {
+          if (data.user == state.user) {
+            $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: state.user, text: 'Joined ' + state.room }); 
+            $scope.joining = false;
+          }
+          else {
+            $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' is joined the room' }); 
+            $scope.members[data.user] = '';
+          }
+        }
+        else if (data.action === 'part' || data.action === 'quit') {
+          $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' is leaved the room' }); 
+          delete $scope.members[data.user];
+          $scope.$apply();
+          console.log ($scope.members);
         }
         else if (data.action === 'message') {
-          $scope.messages.push({ time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
+          $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
           $scope.$apply();
         }
         else if (data.action === 'names') {
-          $scope.members = data.nicks;
+          $scope.members = data.users;
           $scope.$apply();
         }
       });
@@ -49,13 +61,16 @@ angular.module('chat', [ 'ngRoute' ])
       $scope.joining = true;
 
       $scope.messages = [
-        { time: moment(new Date()).format('hh:mm'), user: state.user, text: 'Joining ' + state.room }
+        { type: 'command', time: moment(new Date()).format('hh:mm'), user: state.user, text: 'Joining ' + state.room }
       ];
-      $scope.members = [];
+      $scope.members = {};
+      $scope.fillname = function (name) {
+        $scope.message = name + ', ';
+      }
       $scope.send = function () {
         if (S($scope.message).isEmpty()) return;
 
-        $scope.messages.push({ time: moment(new Date()).format('hh:mm'), user: state.user, text: $scope.message });
+        $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: state.user, text: $scope.message });
         primus.write({ action: 'say', room: $scope.room, message: $scope.message });
         $scope.message = '';
         var element = document.querySelector('.conversations');

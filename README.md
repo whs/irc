@@ -1,4 +1,5 @@
-pubsub
-======
+IRC Client
+==========
 
-Publish subscribe service
+IRC Client implements in node.js and angular for access via normal web.
+

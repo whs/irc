@@ -47,8 +47,6 @@ var clientCount = 0;
 primus.on('connection', function (spark) {
 
   clientCount++;
-  console.log ('Spark ' + spark.id + ' is connected');
-  console.log ('Total client: ' + clientCount);
   clients[spark.id] = { spark: spark, irc: null };
   spark.on('data', function (data) {
     var self = this;
@@ -64,14 +62,20 @@ primus.on('connection', function (spark) {
         channels: [ room ] 
       });
       clients[spark.id].irc = connection;
-      connection.addListener('join', function (room, nick) {
-        spark.write({ action: 'joined', room: room });
+      connection.addListener('join', function (room, user) {
+        spark.write({ action: 'join', room: room, user: user});
+      });
+      connection.addListener('part', function (room, user, reason) {
+        spark.write({ action: 'part', room: room, user: user });
+      });
+      connection.addListener('quit', function (user, reason, rooms) {
+        spark.write({ action: 'quit', rooms: rooms, user: user });
       });
       connection.addListener('message', function (from, room, message) {
         spark.write({ action: 'message', from: from, room: room, message: message });
       });
-      connection.addListener('names', function (room, nicks) {
-        spark.write({ action: 'names', room: room, nicks: nicks });
+      connection.addListener('names', function (room, users) {
+        spark.write({ action: 'names', room: room, users: users});
       });
       connection.addListener('nick', function (oldName, newName, room) {
         spark.write({ action: 'nick', room: room, oldname: oldName, newname: newName });
@@ -94,8 +98,6 @@ primus.on('disconnection', function (spark) {
   }
   delete clients[spark.id];
   clientCount--;
-  console.log ('Spark ' + spark.id + ' is disconnected');
-  console.log ('Total client: ' + clientCount);
 });
 
 primus.save(__dirname +'/assets/js/libs/primus.js');
