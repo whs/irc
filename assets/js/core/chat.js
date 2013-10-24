@@ -33,7 +33,8 @@ angular.module('chat', [ 'ngRoute' ])
       primus.write({ action: 'connect', server: state.server, room: state.room, user: state.user });
       primus.on('data', function message(data) {
         if (data.action === 'join') {
-          if (data.user == state.user) {
+          if ($scope.joining) {
+            state.user = data.user;
             $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: state.user, text: 'Joined ' + state.room }); 
             $scope.joining = false;
           }
@@ -46,7 +47,6 @@ angular.module('chat', [ 'ngRoute' ])
           $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' is leaved the room' }); 
           delete $scope.members[data.user];
           $scope.$apply();
-          console.log ($scope.members);
         }
         else if (data.action === 'message') {
           $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
@@ -54,6 +54,15 @@ angular.module('chat', [ 'ngRoute' ])
         }
         else if (data.action === 'names') {
           $scope.members = data.users;
+          $scope.$apply();
+        }
+        else if (data.action === 'nick') {
+          if (data.oldname === state.user) {
+            state.user = data.newname;
+          }
+          var value = $scope.members[data.oldname];
+          delete $scope.members[data.oldname];
+          $scope.members[data.newname] = value;
           $scope.$apply();
         }
       });
