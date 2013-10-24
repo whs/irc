@@ -89,6 +89,12 @@ primus.on('connection', function (spark) {
       var connection = clients[spark.id].irc;
       connection.say(data.room, data.message);
     }
+    else if (data.action === 'command') {
+      var arguments = data.arguments;
+      var connection = clients[spark.id].irc;
+      arguments[0] = arguments[0].substring(1);
+      connection.send.apply(connection, arguments);
+    }
 
   });
 });

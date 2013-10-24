@@ -79,8 +79,15 @@ angular.module('chat', [ 'ngRoute' ])
       $scope.send = function () {
         if (S($scope.message).isEmpty()) return;
 
-        $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: state.user, text: $scope.message });
-        primus.write({ action: 'say', room: $scope.room, message: $scope.message });
+        var message = S($scope.message).trim();
+        if (S(message).startsWith('/nick')) {
+          var args = message.split(' ');
+          primus.write({ action: 'command', arguments: args });
+        }
+        else {
+          $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: state.user, text: message });
+          primus.write({ action: 'say', room: $scope.room, message: message });
+        }
         $scope.message = '';
         var element = document.querySelector('.conversations');
         element.scrollTop = element.scrollHeight;
