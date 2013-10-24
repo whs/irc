@@ -29,7 +29,7 @@ angular.module('chat', [ 'ngRoute' ])
 
       $scope.room = state.room;
 
-      var primus = Primus.connect();
+      var primus = Primus.connect('/', { websocket: false });
       primus.write({ action: 'connect', server: state.server, room: state.room, user: state.user });
       primus.on('data', function message(data) {
         if (data.action === 'joined') {
