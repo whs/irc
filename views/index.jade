@@ -23,7 +23,7 @@ block content
                 .chat(ng-switch on='message.type')
                   .type-message.line(ng-switch-when='message')
                     span.timestamp {{message.time}}
-                    span.from {{message.user}}
+                    span.from(class='color-{{message.user|ircColor}}',ng-click='fillname(message.user)') {{message.user}}
                     span.text {{message.text}}
                   .type-command.line(ng-switch-when='command')
                     span.timestamp {{message.time}}
@@ -31,7 +31,7 @@ block content
           .small-4.columns.members
             ul
               li(ng-repeat='(name, options) in members track by name')
-                span.name 
+                span.name(class='color-{{name|ircColor}}') 
                   a(ng-click='fillname(name)') {{name}}
       .inputbox
         .row

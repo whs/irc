@@ -10,6 +10,24 @@ angular.module('chat', [ 'ngRoute' ])
   .factory('state', function () {
     return { user: '', room: '', server: '' };
   })
+  .factory('userColor', function () {
+    // http://xchat.sourcearchive.com/documentation/2.4.1-0.1/inbound_8c-source.html
+    function color_of(name){
+      var sum = 0, i=0;
+      var rcolors = [2, 3, 4, 5, 6, 7, 10];
+      while (name[i]){
+        sum += name[i++].charCodeAt(0);
+      }
+      sum %= rcolors.length;
+      return rcolors[sum];
+    }
+    return color_of;
+  })
+  .filter('ircColor', [ 'userColor', function (userColor) {
+    return function(input){
+      return userColor(input);
+    };
+  }])
   .controller('Login', [ '$scope', '$location', 'state', 
     function ($scope, $location, state) {
 
