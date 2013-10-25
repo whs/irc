@@ -146,15 +146,12 @@ angular.module('chat', [ 'ngRoute' ])
         else if (data.action === 'part' || data.action === 'quit') {
           $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' left the room' }); 
           delete $scope.members[data.user];
-          $scope.$apply();
         }
         else if (data.action === 'message') {
           $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
-          $scope.$apply();
         }
         else if (data.action === 'names') {
           $scope.members = data.users;
-          $scope.$apply();
         }
         else if (data.action === 'nick') {
           if (data.oldname === state.user) {
@@ -163,8 +160,11 @@ angular.module('chat', [ 'ngRoute' ])
           var value = $scope.members[data.oldname];
           delete $scope.members[data.oldname];
           $scope.members[data.newname] = value;
-          $scope.$apply();
         }
+
+        $scope.$apply();
+        var element = document.querySelector('.conversations');
+        element.scrollTop = element.scrollHeight;
       });
 
       $scope.joining = true;
