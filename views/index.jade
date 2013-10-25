@@ -21,11 +21,11 @@ block content
             ul
               li.message(ng-repeat='message in messages track by $index') 
                 .chat(ng-switch on='message.type')
-                  .line(ng-switch-when='message')
+                  .type-message.line(ng-switch-when='message')
                     span.timestamp {{message.time}}
                     span.from {{message.user}}
                     span.text {{message.text}}
-                  .line(ng-switch-when='command')
+                  .type-command.line(ng-switch-when='command')
                     span.timestamp {{message.time}}
                     span.text {{message.text}}
           .small-4.columns.members

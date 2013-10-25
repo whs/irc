@@ -39,12 +39,12 @@ angular.module('chat', [ 'ngRoute' ])
             $scope.joining = false;
           }
           else {
-            $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' is joined the room' }); 
+            $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' joined the room' }); 
             $scope.members[data.user] = '';
           }
         }
         else if (data.action === 'part' || data.action === 'quit') {
-          $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' is leaved the room' }); 
+          $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' left the room' }); 
           delete $scope.members[data.user];
           $scope.$apply();
         }
