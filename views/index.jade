@@ -10,7 +10,7 @@ block content
               legend Login
 
               input(type='text',placeholder='chat name',ng-model='user',required)
-              input(type='text',placeholder='room name',ng-init='room="#_test"',ng-model='room',disabled)
+              input(type='text',placeholder='room name',ng-init='room="#awkwintest"',ng-model='room',disabled)
               input(type='text',placeholder='server name',ng-init='server="irc.oftc.net"',ng-model='server',disabled)
               button.small.submit Login
 
@@ -24,7 +24,7 @@ block content
                   .type-message.line(ng-switch-when='message')
                     span.timestamp {{message.time}}
                     span.from(class='color-{{message.user|ircColor}}',ng-click='fillname(message.user)') {{message.user}}
-                    span.text {{message.text}}
+                    span.text(irc-color='message.text')
                   .type-command.line(ng-switch-when='command')
                     span.timestamp {{message.time}}
                     span.text {{message.text}}

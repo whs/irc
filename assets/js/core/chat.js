@@ -23,10 +23,74 @@ angular.module('chat', [ 'ngRoute' ])
     }
     return color_of;
   })
+  .factory('escapeHTML', function () {
+    return function(str){
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    };
+  })
   .filter('ircColor', [ 'userColor', function (userColor) {
     return function(input){
       return userColor(input);
     };
+  }])
+  .directive('ircColor', [ 'escapeHTML', function (escapeHTML) {
+    return {
+      'link': function(scope, element, attrs){
+        var value;
+        var update = function(){
+          // escape HTML
+          var html = escapeHTML(value);
+          var out = "";
+          var hasOpenTag = false;
+          var curColor = [];
+          for (var i = 0; i < html.length; i++) {
+            var cur = html[i];
+            if(cur == "\x03"){
+              if(html[i+1] === undefined || !html[i+1].match(/[0-9]/)){
+                // stop formatting
+                out += "</span>";
+                hasOpenTag = false;
+                continue;
+              }
+              var color = parseInt(html.substr(i+1, 2));
+              var bgColor = null;
+              if(html[i+3] == ","){
+                var bgColor = parseInt(html.substr(i+4, 2));
+                i += 3;
+              }
+              if(hasOpenTag){
+                out += "</span>";
+              }
+              var cls = [];
+              if(color){
+                cls.push("color-"+color);
+              }
+              if(bgColor){
+                cls.push("bgcolor-"+bgColor);
+              }
+              out += "<span class=\""+cls.join(" ")+"\">";
+              hasOpenTag = true;
+              i += 2; // i++ add another
+            }else if(cur == "\x0f"){
+              out += "</span>";
+              hasOpenTag = false;
+            }else{
+              out += cur;
+            }
+          };
+          if(hasOpenTag){
+            out += "</span>";
+          }
+          element.html(out);
+        };
+        scope.$watch(attrs.ircColor, function(val){
+          value = val;
+          update();
+        });
+      }
+    }
   }])
   .controller('Login', [ '$scope', '$location', 'state', 
     function ($scope, $location, state) {
