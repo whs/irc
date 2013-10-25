@@ -72,6 +72,7 @@ angular.module('chat', [ 'ngRoute' ])
       $scope.messages = [
         { type: 'command', time: moment(new Date()).format('hh:mm'), user: state.user, text: 'Joining ' + state.room }
       ];
+      document.title = state.room;
       $scope.members = {};
       $scope.fillname = function (name) {
         $scope.message = name + ', ';
