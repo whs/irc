@@ -76,6 +76,24 @@ angular.module('chat', [ 'ngRoute' ])
             }else if(cur == "\x0f"){
               out += "</span>";
               hasOpenTag = false;
+            }else if(cur == "\x02"){
+              if(hasOpenTag){
+                out += "</span>";
+              }
+              out += "<span style=\"font-weight: bold;\">";
+              hasOpenTag = true;
+            }else if(cur == "\x1f"){
+              if(hasOpenTag){
+                out += "</span>";
+              }
+              out += "<span style=\"text-decoration: underline;\">";
+              hasOpenTag = true;
+            }else if(cur == "\u0016"){
+              if(hasOpenTag){
+                out += "</span>";
+              }
+              out += "<span style=\"font-style: italic;\">";
+              hasOpenTag = true;
             }else{
               out += cur;
             }
