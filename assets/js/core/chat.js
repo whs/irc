@@ -10,9 +10,9 @@ angular.module('chat', [ 'ngRoute' ])
   .factory('state', function () {
     return { user: '', room: '', server: '' };
   })
-  .factory('userColor', function () {
-    // http://xchat.sourcearchive.com/documentation/2.4.1-0.1/inbound_8c-source.html
-    function color_of(name){
+  .filter('ircColor', function () {
+    return function(name){
+      // http://xchat.sourcearchive.com/documentation/2.4.1-0.1/inbound_8c-source.html
       var sum = 0, i=0;
       var rcolors = [2, 3, 4, 5, 6, 7, 10];
       while (name[i]){
@@ -20,14 +20,8 @@ angular.module('chat', [ 'ngRoute' ])
       }
       sum %= rcolors.length;
       return rcolors[sum];
-    }
-    return color_of;
-  })
-  .filter('ircColor', [ 'userColor', function (userColor) {
-    return function(input){
-      return userColor(input);
     };
-  }])
+  })
   .directive('ircColor', [ function () {
     return {
       'link': function(scope, element, attrs){
