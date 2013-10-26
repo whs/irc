@@ -142,7 +142,7 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         $scope.$apply();
       });
 
-      $scope.$watch('messages', function () {
+      $scope.$watchCollection('messages', function () {
         var element = document.querySelector('.conversations');
         element.scrollTop = element.scrollHeight;
       });
