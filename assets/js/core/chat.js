@@ -12,7 +12,6 @@ angular.module('chat', [ 'ngRoute' ])
   })
   .filter('ircColor', function () {
     return function(name){
-      // http://xchat.sourcearchive.com/documentation/2.4.1-0.1/inbound_8c-source.html
       var sum = 0, i=0;
       var rcolors = [2, 3, 4, 5, 6, 7, 10];
       while (name[i]){
