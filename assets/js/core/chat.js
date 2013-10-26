@@ -126,10 +126,6 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
           $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
         }
       });
-      IRC.on('send', function () {
-        // Clear text after send
-        $scope.message = '';
-      });
       IRC.on('names', function (data) {
         $scope.members = data.users;
       });
@@ -158,6 +154,7 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       }
       $scope.send = function () {
         IRC.send($scope.message);
+        $scope.message = '';
       }
       $scope.keypress = function (event) {
         if (event.keyCode === 13) {
