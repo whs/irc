@@ -1,15 +1,12 @@
 'use strict'
 
-angular.module('chat', [ 'ngRoute' ])
+angular.module('chat', [ 'ngRoute', 'Services' ])
   .config([ '$routeProvider', function ($route) {
     $route
       .when('/login', { controller: 'Login', templateUrl: 'login.html' })
       .when('/chat', { controller: 'Chat', templateUrl: 'chat.html' })
       .otherwise({ redirectTo: '/login' });
   }])
-  .factory('state', function () {
-    return { user: '', room: '', server: '' };
-  })
   .filter('ircColor', function () {
     return function(name){
       var sum = 0, i=0;
@@ -96,19 +93,16 @@ angular.module('chat', [ 'ngRoute' ])
       }
     }
   }])
-  .controller('Login', [ '$scope', '$location', 'state', 
-    function ($scope, $location, state) {
+  .controller('Login', [ '$scope', '$location', 'IRC', 
+    function ($scope, $location, IRC) {
 
       $scope.login = function () {
-
-        state.user = $scope.user;
-        state.room = $scope.room;
-        state.server = $scope.server;
+        IRC.init($scope.server, $scope.user, [ $scope.room ]);
         $location.path('/chat');
       }
     }])
-  .controller('Chat', [ '$scope', '$location', 'state',
-    function ($scope, $location, state) {
+  .controller('Chat', [ '$scope', '$location', 'IRC',
+    function ($scope, $location, IRC) {
       if (!state.user || !state.room || !state.server) {
         $location.path('/login');
       }

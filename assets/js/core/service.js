@@ -33,10 +33,18 @@ angular.module('Services', [])
         _events[name].push (fb);
       }
 
-      this.connect = function (server, user, rooms) {
-        _server = server;
-        _user = user;
-        _rooms = rooms;
+      this.init = function (server, user, rooms) {
+        _server = S(server).trim().s;
+        _user = S(users).trim().s;
+        _rooms = rooms || [];
+      }
+
+      this.connect = function () {
+        if (_server && _user && _rooms.length > 0) {
+          // Not support more than 1 room yet.
+          var room = _rooms[0];
+          primus.write({ action: 'connect', server: _server, room: room, user: _user });
+        }
       }
 
       var _isCommand = function (message) {
