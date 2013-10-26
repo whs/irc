@@ -19,7 +19,7 @@ block content
         .row
           .small-8.columns.conversations
             ul
-              li.message(ng-repeat='message in messages track by $index') 
+              li.message(ng-repeat='message in messages track by $index',ng-class='{mention: message.mention}') 
                 .chat(ng-switch on='message.type')
                   .type-message.line(ng-switch-when='message')
                     span.timestamp {{message.time}}

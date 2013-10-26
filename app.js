@@ -63,7 +63,7 @@ primus.on('connection', function (spark) {
       var user = data.user;
       var server = data.server;
 
-      // make webchat user identifyable
+      // make webchat user identifiable
       var sha256 = crypto.createHash('sha256');
       sha256.update(spark.address.ip);
       var username = sha256.digest('base64');

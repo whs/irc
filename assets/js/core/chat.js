@@ -99,6 +99,9 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       $scope.login = function () {
         IRC.init($scope.server, $scope.user, [ $scope.room ]);
         $location.path('/chat');
+        if(notify.permissionLevel() !== notify.PERMISSION_GRANTED){
+          notify.requestPermission();
+        }
       }
     }])
   .controller('Chat', [ '$scope', '$location', 'IRC',
@@ -121,9 +124,9 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       });
       IRC.on(['message', 'send'], function (data) {
         if(S(data.message).startsWith('\u0001ACTION') && S(data.message).endsWith('\u0001')){
-          $scope.messages.push({ type: 'action', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message.replace(/^\001ACTION /, "").replace(/\001$/, "") }); 
+          $scope.messages.push({ type: 'action', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message.replace(/^\001ACTION /, "").replace(/\001$/, ""), mention: data.mention }); 
         }else{
-          $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
+          $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message, mention: data.mention }); 
         }
       });
       IRC.on('names', function (data) {
@@ -136,6 +139,12 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       });
       IRC.on('postdata', function () {
         $scope.$apply();
+      });
+      IRC.on('mention', function (data) {
+        notify.createNotification('Mention from '+data.from+' in '+data.room, {
+          body: data.from+': '+data.message,
+          icon: '/assets/img/icon.png' // required
+        });
       });
 
       $scope.$watchCollection('messages', function () {
