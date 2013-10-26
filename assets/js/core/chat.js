@@ -1,18 +1,14 @@
 'use strict'
 
-angular.module('chat', [ 'ngRoute' ])
+angular.module('chat', [ 'ngRoute', 'Services' ])
   .config([ '$routeProvider', function ($route) {
     $route
       .when('/login', { controller: 'Login', templateUrl: 'login.html' })
       .when('/chat', { controller: 'Chat', templateUrl: 'chat.html' })
       .otherwise({ redirectTo: '/login' });
   }])
-  .factory('state', function () {
-    return { user: '', room: '', server: '' };
-  })
-  .factory('userColor', function () {
-    // http://xchat.sourcearchive.com/documentation/2.4.1-0.1/inbound_8c-source.html
-    function color_of(name){
+  .filter('ircColor', function () {
+    return function(name){
       var sum = 0, i=0;
       var rcolors = [2, 3, 4, 5, 6, 7, 10];
       while (name[i]){
@@ -20,14 +16,8 @@ angular.module('chat', [ 'ngRoute' ])
       }
       sum %= rcolors.length;
       return rcolors[sum];
-    }
-    return color_of;
-  })
-  .filter('ircColor', [ 'userColor', function (userColor) {
-    return function(input){
-      return userColor(input);
     };
-  }])
+  })
   .directive('ircColor', [ function () {
     return {
       'link': function(scope, element, attrs){
@@ -103,105 +93,80 @@ angular.module('chat', [ 'ngRoute' ])
       }
     }
   }])
-  .controller('Login', [ '$scope', '$location', 'state', 
-    function ($scope, $location, state) {
+  .controller('Login', [ '$scope', '$location', 'IRC', 
+    function ($scope, $location, IRC) {
 
       $scope.login = function () {
-
-        state.user = $scope.user;
-        state.room = $scope.room;
-        state.server = $scope.server;
+        IRC.init($scope.server, $scope.user, [ $scope.room ]);
         $location.path('/chat');
       }
     }])
-  .controller('Chat', [ '$scope', '$location', 'state',
-    function ($scope, $location, state) {
-      if (!state.user || !state.room || !state.server) {
+  .controller('Chat', [ '$scope', '$location', 'IRC',
+    function ($scope, $location, IRC) {
+      if (!IRC.isInit) {
         $location.path('/login');
       }
 
-      $scope.room = state.room;
-
-      var primus = Primus.connect();
-      primus.write({ action: 'connect', server: state.server, room: state.room, user: state.user });
-      var onMessage = function (data) {
-        if (data.action === 'join') {
-          if ($scope.joining) {
-            state.user = data.user;
-            $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: state.user, text: 'Joined ' + state.room }); 
-            $scope.joining = false;
-          }
-          else {
-            $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' joined the room' }); 
-            $scope.members[data.user] = '';
-          }
+      $scope.room = IRC.room;
+      IRC.on('self.join', function (data) {
+        $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joined ' + IRC.room }); 
+      });
+      IRC.on('join', function (data) {
+        $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' joined the room' }); 
+        $scope.members[data.user] = '';
+      });
+      IRC.on(['part', 'quit'], function (data) {
+        $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' left the room' }); 
+        delete $scope.members[data.user];
+      });
+      IRC.on(['message', 'send'], function (data) {
+        if(S(data.message).startsWith('\u0001ACTION') && S(data.message).endsWith('\u0001')){
+          $scope.messages.push({ type: 'action', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message.replace(/^\001ACTION /, "").replace(/\001$/, "") }); 
+        }else{
+          $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
         }
-        else if (data.action === 'part' || data.action === 'quit') {
-          $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' left the room' }); 
-          delete $scope.members[data.user];
-        }
-        else if (data.action === 'message') {
-          if(S(data.message).startsWith('\u0001ACTION') && S(data.message).endsWith('\u0001')){
-            $scope.messages.push({ type: 'action', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message.replace(/^\001ACTION /, "").replace(/\001$/, "") }); 
-          }else{
-            $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
-          }
-        }
-        else if (data.action === 'names') {
-          $scope.members = data.users;
-        }
-        else if (data.action === 'nick') {
-          if (data.oldname === state.user) {
-            state.user = data.newname;
-          }
-          var value = $scope.members[data.oldname];
-          delete $scope.members[data.oldname];
-          $scope.members[data.newname] = value;
-        }
-      }
-      primus.on('data', function(message){
-        onMessage(message);
+      });
+      IRC.on('send', function () {
+        // Clear text after send
+        $scope.message = '';
+      });
+      IRC.on('names', function (data) {
+        $scope.members = data.users;
+      });
+      IRC.on('nick', function (data) {
+        var value = $scope.members[data.oldname];
+        delete $scope.members[data.oldname];
+        $scope.members[data.newname] = value;
+      });
+      IRC.on('postdata', function () {
         $scope.$apply();
+      });
+
+      $scope.$watchCollection('messages', function () {
         var element = document.querySelector('.conversations');
         element.scrollTop = element.scrollHeight;
       });
 
-      $scope.joining = true;
-
+      // Initial messages
       $scope.messages = [
-        { type: 'command', time: moment(new Date()).format('hh:mm'), user: state.user, text: 'Joining ' + state.room }
+        { type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joining ' + IRC.room }
       ];
-      document.title = state.room;
+      document.title = IRC.room;
       $scope.members = {};
       $scope.fillname = function (name) {
         $scope.message = name + ', ';
       }
       $scope.send = function () {
-        if (S($scope.message).isEmpty()) return;
-
-        var message = S($scope.message).trim().s;
-
-        if (S(message).startsWith('/me')) {
-          message = '\u0001ACTION '+message.replace(/^\/me /, '')+'\u0001';
-        }
-
-        if (S(message).startsWith('/nick')) {
-          var args = message.split(' ');
-          primus.write({ action: 'command', arguments: args });
-        }
-        else {
-          primus.write({ action: 'say', room: $scope.room, message: message });
-          onMessage({ action: 'message', from: state.user, room: state.room, message: message });
-        }
-        $scope.message = '';
-        var element = document.querySelector('.conversations');
-        element.scrollTop = element.scrollHeight;
+        IRC.send($scope.message);
       }
       $scope.keypress = function (event) {
         if (event.keyCode === 13) {
           $scope.send();
         }
       }
+
+      // Connect to the server
+      IRC.connect();
 
     }]);
   

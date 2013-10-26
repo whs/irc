@@ -1,42 +1,110 @@
 'use strict'
 
-angular.module('Service')
-  .factory('Message', function () {
-    var Message = function (text) {
-      var _raw = text;
-    }
-    Message.parse = function (text) {
-      return new Message(text);
-    }
-
-    return Message;
-  })
+angular.module('Services', [])
   .factory('IRC', function () {
     var IRC = function () {
+      var _server = '';
+      var _user = '';
+      var _rooms = [];
+      var _isJoined = false;
+      
+      var _events = {};
+
       var primus = Primus.connect();
+      primus.on('data', function (data) {
+        switch (data.action) {
+          case 'join':
+            if (!_isJoined) {
+              _user = data.user;
+              _isJoined = true;
+              // Special case for self join. Other command that has user maybe use the same pattern.
+              _emit('self.join', data);
+              return;
+            }
+            break;
+          case 'nick':
+            if (data.oldname === _user) {
+              _user = data.newname;
+            }
+            break;
+        }
 
-      this.connect = function (server, user, rooms) {
-        this.server = server;
-        this.user = user;
-        this.rooms = rooms;
+        _emit(data.action, data);
+        _emit('postdata');
+      });
+
+      var _emit = function (name, data) {
+        var fns = _events[name];
+        fns.forEach(function (fn) {
+          fn(data);
+        });
       }
 
-      var _isCommand = function (message) {
-        return /^\/nick/.test(S(message).trim().s);
+      Object.defineProperty(this, 'isInit', {
+        get: function () {
+          return _server && _user && (_rooms.length > 0);
+        }
+      });
+      Object.defineProperty(this, 'room', {
+        get: function () {
+          if (_rooms.length > 0) return _rooms[0];
+          return '';
+        }
+      });
+
+      this.on = function (names, fb) {
+        var _names = names;
+        if (typeof names === 'string') { _names = [ names ] }
+
+        _names.forEach(function (name) {
+          if (!_events[name]) _events[name] = [];
+          _events[name].push (fb);
+        });
       }
-      var _handleCommand = function (message) {
+
+      this.init = function (server, user, rooms) {
+        _server = S(server).trim().s;
+        _user = S(user).trim().s;
+        _rooms = rooms || [];
       }
-      var _handleMessage = function (message) {
+
+      this.connect = function () {
+        if (this.isInit) {
+          // Not support more than 1 room yet.
+          var room = _rooms[0];
+          primus.write({ action: 'connect', server: _server, room: room, user: _user });
+        }
       }
+
+      var Message = function (room, message) {
+        var _room = room;
+        var _message = S(message).trim().s;
+
+        var _isCommand = function () {
+          return /^\/nick/.test(message);
+        }
+
+        this.send = function () {
+          if (_isCommand()) {
+            primus.write({ action: 'command', arguments: message.split(' ') });
+          }
+          else {
+            //Replace me as action
+            if (S(message).startsWith('/me')) {
+              message = '\u0001ACTION '+message.replace(/^\/me /, '')+'\u0001';
+            }
+            primus.write({ action: 'say', room: _room, message: message });
+            _emit('send', { from: _user, room: this.room, message: message });
+          }
+        };
+      }
+
       this.send = function (message) {
-        if (_isCommand(message)) {
-          _handleCommand(message);
-        }
-        else {
-          _handleMessage(message);
-        }
+        new Message(this.room, message).send();
       }
 
     }
-    return new IRC;
+
+    var _instance = new IRC;
+    return _instance;
   });
