@@ -8,9 +8,12 @@ var routes = require('./routes');
 var user = require('./routes/user');
 
 var http = require('http')
+  , dns = require('dns')
+  , crypto = require('crypto')
   , path = require('path')
   , irc = require('irc')
-  , Primus = require('primus');
+  , Primus = require('primus')
+  , Q = require('q');
 
 var app = express();
 
@@ -47,7 +50,11 @@ var clientCount = 0;
 primus.on('connection', function (spark) {
 
   clientCount++;
-  clients[spark.id] = { spark: spark, irc: null };
+  clients[spark.id] = {
+    spark: spark,
+    irc: null,
+    hostname: Q.nfcall(dns.reverse, spark.address.ip)
+  };
   spark.on('data', function (data) {
     var self = this;
 
@@ -56,35 +63,52 @@ primus.on('connection', function (spark) {
       var user = data.user;
       var server = data.server;
 
-      var connection = new irc.Client(server, user, { 
-        userName: 'llunchat',
-        realName: 'llunchat IRC client',
-        channels: [ room ] 
-      });
-      clients[spark.id].irc = connection;
-      connection.addListener('join', function (room, user) {
-        spark.write({ action: 'join', room: room, user: user});
-      });
-      connection.addListener('part', function (room, user, reason) {
-        spark.write({ action: 'part', room: room, user: user });
-      });
-      connection.addListener('quit', function (user, reason, rooms) {
-        spark.write({ action: 'quit', rooms: rooms, user: user });
-      });
-      connection.addListener('message', function (from, room, message) {
-        spark.write({ action: 'message', from: from, room: room, message: message });
-      });
-      connection.addListener('action', function (from, room, message) {
-        spark.write({ action: 'message', from: from, room: room, message: '\001ACTION '+message+'\001' });
-      });
-      connection.addListener('names', function (room, users) {
-        spark.write({ action: 'names', room: room, users: users});
-      });
-      connection.addListener('nick', function (oldName, newName, room) {
-        spark.write({ action: 'nick', room: room, oldname: oldName, newname: newName });
-      });
-      connection.addListener('error', function (message) {
-        console.log ('error: ' + message);
+      // make webchat user identifyable
+      var sha256 = crypto.createHash('sha256');
+      sha256.update(spark.address.ip);
+      var username = sha256.digest('base64');
+
+      var connect = function(hostname){
+        var connection = new irc.Client(server, user, { 
+          userName: username,
+          realName: hostname+' via llunchat',
+          channels: [ room ] 
+        });
+        clients[spark.id].irc = connection;
+        connection.addListener('join', function (room, user) {
+          spark.write({ action: 'join', room: room, user: user});
+        });
+        connection.addListener('part', function (room, user, reason) {
+          spark.write({ action: 'part', room: room, user: user });
+        });
+        connection.addListener('quit', function (user, reason, rooms) {
+          spark.write({ action: 'quit', rooms: rooms, user: user });
+        });
+        connection.addListener('message', function (from, room, message) {
+          spark.write({ action: 'message', from: from, room: room, message: message });
+        });
+        connection.addListener('action', function (from, room, message) {
+          spark.write({ action: 'message', from: from, room: room, message: '\001ACTION '+message+'\001' });
+        });
+        connection.addListener('names', function (room, users) {
+          spark.write({ action: 'names', room: room, users: users});
+        });
+        connection.addListener('nick', function (oldName, newName, room) {
+          spark.write({ action: 'nick', room: room, oldname: oldName, newname: newName });
+        });
+        connection.addListener('error', function (message) {
+          console.log ('error: ' + message);
+        });
+      }
+
+      clients[spark.id].hostname.then(function(hostname){
+        if(hostname.length > 0){
+          connect(hostname[0]);
+        }else{
+          connect(spark.address.ip);
+        }
+      }, function(){
+        connect(spark.address.ip);
       });
 
     }
