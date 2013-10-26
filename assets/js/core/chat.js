@@ -119,12 +119,16 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), user: data.user, text: data.user + ' left the room' }); 
         delete $scope.members[data.user];
       });
-      IRC.on('message', function (data) {
+      IRC.on(['message', 'send'], function (data) {
         if(S(data.message).startsWith('\u0001ACTION') && S(data.message).endsWith('\u0001')){
           $scope.messages.push({ type: 'action', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message.replace(/^\001ACTION /, "").replace(/\001$/, "") }); 
         }else{
           $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
         }
+      });
+      IRC.on('send', function () {
+        // Clear text after send
+        $scope.message = '';
       });
       IRC.on('names', function (data) {
         $scope.members = data.users;

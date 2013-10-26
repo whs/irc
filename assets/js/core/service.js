@@ -34,7 +34,6 @@ angular.module('Services', [])
       });
 
       var _emit = function (name, data) {
-        console.log ('Emit ' + name + '\n', data);
         var fns = _events[name];
         fns.forEach(function (fn) {
           fn(data);
@@ -86,7 +85,7 @@ angular.module('Services', [])
         }
 
         this.send = function () {
-          if (_isCommand) {
+          if (_isCommand()) {
             primus.write({ action: 'command', arguments: message.split(' ') });
           }
           else {
@@ -95,7 +94,7 @@ angular.module('Services', [])
               message = '\u0001ACTION '+message.replace(/^\/me /, '')+'\u0001';
             }
             primus.write({ action: 'say', room: _room, message: message });
-            _emit('message', { from: state.user, room: state.room, message: message });
+            _emit('send', { from: _user, room: this.room, message: message });
           }
         };
       }
