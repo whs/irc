@@ -74,6 +74,9 @@ primus.on('connection', function (spark) {
       connection.addListener('message', function (from, room, message) {
         spark.write({ action: 'message', from: from, room: room, message: message });
       });
+      connection.addListener('action', function (from, room, message) {
+        spark.write({ action: 'message', from: from, room: room, message: '\001ACTION '+message+'\001' });
+      });
       connection.addListener('names', function (room, users) {
         spark.write({ action: 'names', room: room, users: users});
       });

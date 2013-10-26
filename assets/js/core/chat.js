@@ -23,32 +23,25 @@ angular.module('chat', [ 'ngRoute' ])
     }
     return color_of;
   })
-  .factory('escapeHTML', function () {
-    return function(str){
-      var div = document.createElement('div');
-      div.appendChild(document.createTextNode(str));
-      return div.innerHTML;
-    };
-  })
   .filter('ircColor', [ 'userColor', function (userColor) {
     return function(input){
       return userColor(input);
     };
   }])
-  .directive('ircColor', [ 'escapeHTML', function (escapeHTML) {
+  .directive('ircColor', [ function () {
     return {
       'link': function(scope, element, attrs){
         var value;
         var update = function(){
           // escape HTML
-          var html = escapeHTML(value);
+          var html = S(value).escapeHTML().s;
           var out = "";
           var hasOpenTag = false;
           var curColor = [];
           for (var i = 0; i < html.length; i++) {
             var cur = html[i];
             if(cur == "\x03"){
-              if(html[i+1] === undefined || !html[i+1].match(/[0-9]/)){
+              if(html[i+1] === undefined || !S(html[i+1]).isNumeric()){
                 // stop formatting
                 out += "</span>";
                 hasOpenTag = false;
@@ -131,7 +124,7 @@ angular.module('chat', [ 'ngRoute' ])
 
       var primus = Primus.connect();
       primus.write({ action: 'connect', server: state.server, room: state.room, user: state.user });
-      primus.on('data', function message(data) {
+      var onMessage = function (data) {
         if (data.action === 'join') {
           if ($scope.joining) {
             state.user = data.user;
@@ -148,7 +141,11 @@ angular.module('chat', [ 'ngRoute' ])
           delete $scope.members[data.user];
         }
         else if (data.action === 'message') {
-          $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
+          if(S(data.message).startsWith('\u0001ACTION') && S(data.message).endsWith('\u0001')){
+            $scope.messages.push({ type: 'action', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message.replace(/^\001ACTION /, "").replace(/\001$/, "") }); 
+          }else{
+            $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message }); 
+          }
         }
         else if (data.action === 'names') {
           $scope.members = data.users;
@@ -161,7 +158,9 @@ angular.module('chat', [ 'ngRoute' ])
           delete $scope.members[data.oldname];
           $scope.members[data.newname] = value;
         }
-
+      }
+      primus.on('data', function(message){
+        onMessage(message);
         $scope.$apply();
         var element = document.querySelector('.conversations');
         element.scrollTop = element.scrollHeight;
@@ -181,13 +180,18 @@ angular.module('chat', [ 'ngRoute' ])
         if (S($scope.message).isEmpty()) return;
 
         var message = S($scope.message).trim().s;
+
+        if (S(message).startsWith('/me')) {
+          message = '\u0001ACTION '+message.replace(/^\/me /, '')+'\u0001';
+        }
+
         if (S(message).startsWith('/nick')) {
           var args = message.split(' ');
           primus.write({ action: 'command', arguments: args });
         }
         else {
-          $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: state.user, text: message });
           primus.write({ action: 'say', room: $scope.room, message: message });
+          onMessage({ action: 'message', from: state.user, room: state.room, message: message });
         }
         $scope.message = '';
         var element = document.querySelector('.conversations');

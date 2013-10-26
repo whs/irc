@@ -47,6 +47,14 @@ html, body {
               .type-command {
                 color: #60c898;
               }
+              .type-action {
+                .from {
+                  margin-right: 5px;
+                  // "&middot; "
+                  &:before { content: "\2022\a0"; }
+                  &:after { content: ""; }
+                }
+              }
             }
             // - li
           }
