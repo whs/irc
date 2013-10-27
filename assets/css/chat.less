@@ -37,10 +37,18 @@ html, body {
               &.mention:nth-child(even) { background: #fff826; }
 
               .timestamp { 
-                margin-right: 5px;
+                display: block;
+                float: left;
+                width: 40px;
+                font-size: 10pt;
                 color: #ccc;
+                margin-top: 3px;
                 &:after { content: "]"; }
                 &:before { content: "["; }
+              }
+              .text-container {
+                display: block;
+                padding-left: 40+5px;
               }
               .from { 
                 margin-right: 10px;
@@ -80,6 +88,25 @@ html, body {
         position: absolute;
         bottom: 0;
         width: 100%;
+      }
+      .topic {
+        background: #EEE;
+        color: maroon;
+        height: 30px !important;
+        padding: 5px 10px;
+        box-sizing: border-box;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+
+        &:hover{
+          overflow: visible;
+          text-overflow: initial;
+          white-space: normal;
+        }
+
+        strong { margin-right: 5px; }
+        strong:after { content: ": "; }
       }
     }
     // - #view

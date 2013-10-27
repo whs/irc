@@ -115,6 +115,7 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       }
 
       $scope.room = IRC.room;
+      $scope.topic = 'Connecting...';
       Emitter.on('self.join', function (data) {
         $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joined ' + IRC.room }); 
       });
@@ -149,6 +150,10 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         var value = $scope.members[data.oldname];
         delete $scope.members[data.oldname];
         $scope.members[data.newname] = value;
+      });
+      Emitter.on('topic', function (data) {
+        $scope.topic = data.topic;
+        $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Topic: ' + data.topic + ' set by ' + data.nick });
       });
       Emitter.on('postdata', function () {
         $scope.$apply();
