@@ -99,6 +99,9 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       $scope.login = function () {
         Emitter.clear();
         IRC.init($scope.server, $scope.user, [ $scope.room ]);
+        if($scope.nickserv !== ''){
+          IRC.setNickserv($scope.nickserv);
+        }
         $location.path('/chat');
         if(notify.permissionLevel() !== notify.PERMISSION_GRANTED){
           notify.requestPermission();

@@ -65,14 +65,35 @@ primus.on('connection', function (spark) {
       // make webchat user identifiable
       var sha256 = crypto.createHash('sha256');
       sha256.update(spark.address.ip);
-      var username = sha256.digest('base64');
+      var username = sha256.digest('base64').substr(0, 9);
 
       var connect = function(hostname){
         var connection = new irc.Client(server, user, { 
           userName: username,
-          realName: hostname+' via llunchat',
-          channels: [ room ] 
+          realName: hostname+' via llunchat'
         });
+
+        connection.once('registered', function(){
+          if(!data.nickserv){
+            connection.join(room);
+            return;
+          }
+          // OFTC use IDENTIFY password [nick]
+          // Espernet use IDENTIFY [nick] password
+          connection.say('NickServ', 'IDENTIFY ' + data.nickserv);
+          var nickservTimeout = setTimeout(function(){
+            nickservCb('NickServ');
+          }, 2000);
+          var nickservCb = function(from){
+            if(from === 'NickServ'){
+              connection.join(room);
+              connection.removeListener('message', nickservCb);
+              clearTimeout(nickservTimeout);
+            }
+          };
+          connection.addListener('message', nickservCb);
+        });
+
         clients[spark.id].irc = connection;
         connection.addListener('join', function (room, user) {
           spark.write({ action: 'join', room: room, user: user});
@@ -96,7 +117,7 @@ primus.on('connection', function (spark) {
           spark.write({ action: 'nick', room: room, oldname: oldName, newname: newName });
         });
         connection.addListener('error', function (message) {
-          console.error ('error: ' + message);
+          console.error ('error: ' + JSON.stringify(message));
         });
       }
 

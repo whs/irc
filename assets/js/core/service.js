@@ -63,6 +63,7 @@ angular.module('Services', [])
       var _user = '';
       var _rooms = [];
       var _isJoined = false;
+      var _nickserv = null;
       
       var primus = Primus.connect();
       primus.on('data', function (data) {
@@ -114,11 +115,21 @@ angular.module('Services', [])
         _rooms = rooms || [];
       }
 
+      this.setNickserv = function(password){
+        _nickserv = password;
+      }
+
       this.connect = function () {
         if (this.isInit) {
           // Not support more than 1 room yet.
           var room = _rooms[0];
-          primus.write({ action: 'connect', server: _server, room: room, user: _user });
+          primus.write({
+            action: 'connect',
+            server: _server,
+            room: room,
+            user: _user,
+            nickserv: _nickserv
+          });
         }
       }
 
