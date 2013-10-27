@@ -40,6 +40,30 @@ angular.module('Services', [])
         });
       }
 
+      // Moved this model outside.
+      var Message = function (room, message) {
+        var _room = room;
+        var _message = S(message).trim().s;
+
+        var _isCommand = function () {
+          return /^\/nick/.test(message);
+        }
+
+        this.send = function () {
+          if (_isCommand()) {
+            primus.write({ action: 'command', arguments: message.split(' ') });
+          }
+          else {
+            //Replace me as action
+            if (S(message).startsWith('/me')) {
+              message = '\u0001ACTION '+message.replace(/^\/me /, '')+'\u0001';
+            }
+            primus.write({ action: 'say', room: _room, message: message });
+            _emit('send', { from: _user, room: this.room, message: message });
+          }
+        };
+      }
+
       Object.defineProperty(this, 'isInit', {
         get: function () {
           return _server && _user && (_rooms.length > 0);
@@ -65,6 +89,11 @@ angular.module('Services', [])
         });
       }
 
+      this.clear = function () {
+        // Clear all events
+        _events = {};
+      }
+
       this.init = function (server, user, rooms) {
         _server = S(server).trim().s;
         _user = S(user).trim().s;
@@ -78,29 +107,6 @@ angular.module('Services', [])
           var room = _rooms[0];
           primus.write({ action: 'connect', server: _server, room: room, user: _user });
         }
-      }
-
-      var Message = function (room, message) {
-        var _room = room;
-        var _message = S(message).trim().s;
-
-        var _isCommand = function () {
-          return /^\/nick/.test(message);
-        }
-
-        this.send = function () {
-          if (_isCommand()) {
-            primus.write({ action: 'command', arguments: message.split(' ') });
-          }
-          else {
-            //Replace me as action
-            if (S(message).startsWith('/me')) {
-              message = '\u0001ACTION '+message.replace(/^\/me /, '')+'\u0001';
-            }
-            primus.write({ action: 'say', room: _room, message: message });
-            _emit('send', { from: _user, room: this.room, message: message });
-          }
-        };
       }
 
       this.send = function (message) {

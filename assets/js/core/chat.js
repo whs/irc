@@ -97,6 +97,7 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
     function ($scope, $location, IRC) {
 
       $scope.login = function () {
+        IRC.clear();
         IRC.init($scope.server, $scope.user, [ $scope.room ]);
         $location.path('/chat');
         if(notify.permissionLevel() !== notify.PERMISSION_GRANTED){
@@ -123,18 +124,19 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         delete $scope.members[data.user];
       });
       IRC.on(['message', 'send'], function (data) {
-        if(S(data.message).startsWith('\u0001ACTION') && S(data.message).endsWith('\u0001')){
-          $scope.messages.push({ type: 'action', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message.replace(/^\001ACTION /, "").replace(/\001$/, ""), mention: data.mention }); 
-        }else{
-          $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message, mention: data.mention }); 
-        }
-
         // Mention
         if(data.from !== IRC.user && S(data.message).contains(IRC.user)){
+          data.mention = true;
           notify.createNotification('Mention from ' + data.from + ' in ' + IRC.room, {
             body: data.from + ': ' + data.message,
             icon: '/assets/img/icon.png' // required
           });
+        }
+
+        if(S(data.message).startsWith('\u0001ACTION') && S(data.message).endsWith('\u0001')){
+          $scope.messages.push({ type: 'action', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message.replace(/^\001ACTION /, "").replace(/\001$/, ""), mention: data.mention }); 
+        }else{
+          $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message, mention: data.mention }); 
         }
       });
       IRC.on('names', function (data) {
