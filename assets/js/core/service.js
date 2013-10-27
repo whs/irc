@@ -51,6 +51,9 @@ angular.module('Services', [])
           return '';
         }
       });
+      Object.defineProperty(this, 'user', {
+        get: function () { return _user; }
+      });
 
       this.on = function (names, fb) {
         var _names = names;
@@ -66,6 +69,7 @@ angular.module('Services', [])
         _server = S(server).trim().s;
         _user = S(user).trim().s;
         _rooms = rooms || [];
+        console.log (user);
       }
 
       this.connect = function () {

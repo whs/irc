@@ -130,9 +130,9 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         }
 
         // Mention
-        if(data.message.indexOf(_user) !== -1){
-          notify.createNotification('Mention from '+data.from+' in '+data.room, {
-            body: data.from+': '+data.message,
+        if(data.from !== IRC.user && S(data.message).contains(IRC.user)){
+          notify.createNotification('Mention from ' + data.from + ' in ' + IRC.room, {
+            body: data.from + ': ' + data.message,
             icon: '/assets/img/icon.png' // required
           });
         }
