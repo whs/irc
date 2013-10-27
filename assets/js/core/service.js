@@ -30,7 +30,34 @@ angular.module('Services', [])
     }
     return new Emitter;
   })
-  .factory('IRC', [ 'Emitter', function (Emitter) {
+  .factory('Message', function () {
+    var Message = function (room, message) {
+      var _room = room;
+      var _message = S(message).trim().s;
+
+      var _isCommand = function () {
+        return /^\/nick/.test(message);
+      }
+
+      Object.defineProperty(this, 'data', {
+        get: function () {
+          if (_isCommand()) {
+            return { action: 'command', arguments: message.split(' ') };
+          }
+          else {
+            //Replace me as action
+            if (S(_message).startsWith('/me')) {
+              _message = '\u0001ACTION ' + _message.replace(/^\/me /, '') + '\u0001';
+            }
+            return { action: 'say', room: _room, message: message };
+          }
+        }
+      });
+    }
+
+    return Message;
+  })
+  .factory('IRC', [ 'Emitter', 'Message', function (Emitter, Message) {
     var IRC = function () {
       var _server = '';
       var _user = '';
@@ -60,29 +87,6 @@ angular.module('Services', [])
         Emitter.emit('postdata');
       });
 
-      // Moved this model outside.
-      var Message = function (room, message) {
-        var _room = room;
-        var _message = S(message).trim().s;
-
-        var _isCommand = function () {
-          return /^\/nick/.test(message);
-        }
-
-        this.send = function () {
-          if (_isCommand()) {
-            primus.write({ action: 'command', arguments: message.split(' ') });
-          }
-          else {
-            //Replace me as action
-            if (S(message).startsWith('/me')) {
-              message = '\u0001ACTION '+message.replace(/^\/me /, '')+'\u0001';
-            }
-            primus.write({ action: 'say', room: _room, message: message });
-            Emitter.emit('send', { from: _user, room: this.room, message: message });
-          }
-        };
-      }
 
       Object.defineProperty(this, 'isInit', {
         get: function () {
@@ -108,7 +112,6 @@ angular.module('Services', [])
         _server = S(server).trim().s;
         _user = S(user).trim().s;
         _rooms = rooms || [];
-        console.log (user);
       }
 
       this.connect = function () {
@@ -119,8 +122,12 @@ angular.module('Services', [])
         }
       }
 
-      this.send = function (message) {
-        new Message(this.room, message).send();
+      this.send = function (text) {
+        var message = new Message(this.room, text);
+        primus.write(message.data);
+        if (message.action === 'say') {
+          Emitter.emit('send', { from: _user, room: this.room, message: message });
+        }
       }
 
     }
