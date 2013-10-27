@@ -16,7 +16,8 @@ block content
               button.small.submit Login
 
     script(type='text/ng-template', id='chat.html')
-      .topic.row
+      .topic
+        .row
           strong(ng-bind='room')
           span(ng-bind='topic')
       .contents
