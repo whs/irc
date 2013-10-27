@@ -41,13 +41,13 @@ block content
       .inputbox
         .row
           .small-10.columns
-            .autocomplete
+            .autocomplete(ng-style='autocompleteStyle')
               ul
-                li(ng-repeat='item in memberFilter()')
+                li(ng-repeat='item in memberFilter()',ng-class='memberSelectClass($index)')
                   span.name {{item}} 
         .row
           .small-10.columns
-            input(type='text',ng-model='message',ng-keypress='keypress($event)',autofocus)
+            input(type='text',ng-model='message',ng-keypress='keypress($event)',ng-keydown='keydown($event)',autofocus)
           .small-2.columns
             button.small.small-12(ng-click='send()') Send
 

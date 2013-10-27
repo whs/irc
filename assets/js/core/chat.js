@@ -159,6 +159,7 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       $scope.room = IRC.room;
       $scope.autocompleteText = '';
       $scope.autocompleteIndex = 0;
+      $scope.autocompleteStyle = '';
       $scope.members = {};
       $scope.messages = [
         { type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joining ' + IRC.room }
@@ -168,6 +169,21 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         var element = document.querySelector('.conversations');
         element.scrollTop = element.scrollHeight;
       });
+      $scope.$watch('autocompleteText', function () {
+        if ($scope.autocompleteText.length > 0 && 
+            $scope.memberFilter().length > 0) {
+
+          // Reset autocomplete index
+          if (!$scope.autocompleteStyle.display ||
+              $scope.autocompleteStyle.display === 'none') {
+            $scope.autocompleteIndex = 0;
+          }
+          $scope.autocompleteStyle = { display: 'block' };
+        }
+        else {
+          $scope.autocompleteStyle = { display: 'none' };
+        }
+      });
 
       $scope.fillname = function (name) {
         $scope.message = name + ', ';
@@ -175,15 +191,64 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       $scope.memberFilter = function () {
         return _.filter(_.keys($scope.members), function (key) { return S(key).startsWith($scope.autocompleteText); });
       }
+      $scope.memberSelectClass = function (index) {
+        if (index === $scope.autocompleteIndex) {
+          return 'selected';
+        }
+        return '';
+      }
       $scope.send = function () {
         IRC.send($scope.message);
         $scope.message = '';
       }
-      $scope.keypress = function (event) {
-        if (event.keyCode === 13) {
-          $scope.send();
+      $scope.keydown = function (event) {
+        var input = event.currentTarget;
+        switch (event.keyCode) {
+          // Delete/Backspace
+          case 8:
+            var text = input.value;
+            $scope.autocompleteText = _.last(text.substring(0, text.length - 1).split(' '));
+            break;
+          // Tab
+          case 9:
+            if ($scope.autocompleteStyle.display === 'block') {
+              event.preventDefault();
+              var selected = $scope.memberFilter()[$scope.autocompleteIndex];
+              $scope.message += selected.substring($scope.autocompleteText.length);
+              $scope.autocompleteText = '';
+            }
+            break;
+          // Enter
+          case 13:
+            if ($scope.autocompleteStyle.display === 'block') {
+              event.preventDefault();
+              var selected = $scope.memberFilter()[$scope.autocompleteIndex];
+              $scope.message += selected.substring($scope.autocompleteText.length);
+              $scope.autocompleteText = '';
+            }
+            else {
+              $scope.send();
+            }
+            break;
+          // Up
+          case 38:
+            event.preventDefault();
+            var nextIndex = $scope.autocompleteIndex - 1;
+            if (nextIndex > -1) {
+              $scope.autocompleteIndex = nextIndex;
+            }
+            break;
+          // Down
+          case 40:
+            event.preventDefault();
+            var nextIndex = $scope.autocompleteIndex + 1;
+            if (nextIndex < $scope.memberFilter().length) {
+              $scope.autocompleteIndex = nextIndex;
+            }
+            break;
         }
-
+      }
+      $scope.keypress = function (event) {
         var input = event.currentTarget;
         $scope.autocompleteText = _.last((input.value + String.fromCharCode(event.charCode)).split(' '));
       }
