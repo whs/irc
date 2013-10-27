@@ -52,8 +52,7 @@ primus.on('connection', function (spark) {
   clientCount++;
   clients[spark.id] = {
     spark: spark,
-    irc: null,
-    hostname: Q.nfcall(dns.reverse, spark.address.ip)
+    irc: null
   };
   spark.on('data', function (data) {
     var self = this;
@@ -97,19 +96,22 @@ primus.on('connection', function (spark) {
           spark.write({ action: 'nick', room: room, oldname: oldName, newname: newName });
         });
         connection.addListener('error', function (message) {
-          console.log ('error: ' + message);
+          console.error ('error: ' + message);
         });
       }
 
-      clients[spark.id].hostname.then(function(hostname){
-        if(hostname.length > 0){
-          connect(hostname[0]);
-        }else{
+      Q.nfcall(dns.reverse, spark.address.ip)
+        .then(function (hostname) {
+          if (hostname.length > 0) {
+            connect (hostname[0]);
+          }
+          else {
+            connect(spark.address.ip);
+          }
+        })
+        .fail(function () {
           connect(spark.address.ip);
-        }
-      }, function(){
-        connect(spark.address.ip);
-      });
+        });
 
     }
     else if (data.action === 'say') {

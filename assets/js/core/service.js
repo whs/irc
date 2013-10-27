@@ -103,13 +103,6 @@ angular.module('Services', [])
         new Message(this.room, message).send();
       }
 
-      this.on('message', function (data) {
-        if(data.message.indexOf(_user) !== -1){
-          data.mention = true;
-          _emit('mention', data);
-        }
-      });
-
     }
 
     var _instance = new IRC;

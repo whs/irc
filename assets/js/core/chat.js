@@ -128,6 +128,14 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         }else{
           $scope.messages.push({ type: 'message', time: moment(new Date()).format('hh:mm'), user: data.from, text: data.message, mention: data.mention }); 
         }
+
+        // Mention
+        if(data.message.indexOf(_user) !== -1){
+          notify.createNotification('Mention from '+data.from+' in '+data.room, {
+            body: data.from+': '+data.message,
+            icon: '/assets/img/icon.png' // required
+          });
+        }
       });
       IRC.on('names', function (data) {
         $scope.members = data.users;
@@ -139,12 +147,6 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       });
       IRC.on('postdata', function () {
         $scope.$apply();
-      });
-      IRC.on('mention', function (data) {
-        notify.createNotification('Mention from '+data.from+' in '+data.room, {
-          body: data.from+': '+data.message,
-          icon: '/assets/img/icon.png' // required
-        });
       });
 
       $scope.$watchCollection('messages', function () {
