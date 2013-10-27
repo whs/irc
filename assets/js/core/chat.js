@@ -116,6 +116,8 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
 
       $scope.room = IRC.room;
       $scope.topic = 'Connecting...';
+      var mentionCount = 0;
+
       Emitter.on('self.join', function (data) {
         $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joined ' + IRC.room }); 
       });
@@ -135,6 +137,8 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
             body: data.from + ': ' + data.message,
             icon: '/assets/img/icon.png' // required
           });
+          mentionCount++;
+          Tinycon.setBubble(mentionCount);
         }
 
         if(S(data.message).startsWith('\u0001ACTION') && S(data.message).endsWith('\u0001')){
@@ -163,6 +167,13 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         var element = document.querySelector('.conversations');
         element.scrollTop = element.scrollHeight;
       });
+
+      document.addEventListener('mousemove', function(){
+        if(mentionCount > 0){
+          mentionCount = 0;
+          Tinycon.setBubble(mentionCount);
+        }
+      }, false);
 
       // Initial messages
       $scope.messages = [
