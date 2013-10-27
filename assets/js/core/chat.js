@@ -113,8 +113,9 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       if (!IRC.isInit) {
         $location.path('/login');
       }
+      document.title = IRC.room;
 
-      $scope.room = IRC.room;
+      // All listeners are here.
       Emitter.on('self.join', function (data) {
         $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joined ' + IRC.room }); 
       });
@@ -154,19 +155,25 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         $scope.$apply();
       });
 
+      // All scope vairables are here.
+      $scope.room = IRC.room;
+      $scope.autocompleteText = '';
+      $scope.autocompleteIndex = 0;
+      $scope.members = {};
+      $scope.messages = [
+        { type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joining ' + IRC.room }
+      ];
+
       $scope.$watchCollection('messages', function () {
         var element = document.querySelector('.conversations');
         element.scrollTop = element.scrollHeight;
       });
 
-      // Initial messages
-      $scope.messages = [
-        { type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joining ' + IRC.room }
-      ];
-      document.title = IRC.room;
-      $scope.members = {};
       $scope.fillname = function (name) {
         $scope.message = name + ', ';
+      }
+      $scope.memberFilter = function () {
+        return _.filter(_.keys($scope.members), function (key) { return S(key).startsWith($scope.autocompleteText); });
       }
       $scope.send = function () {
         IRC.send($scope.message);
@@ -176,7 +183,11 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         if (event.keyCode === 13) {
           $scope.send();
         }
+
+        var input = event.currentTarget;
+        $scope.autocompleteText = _.last((input.value + String.fromCharCode(event.charCode)).split(' '));
       }
+
 
       // Connect to the server
       IRC.connect();
