@@ -1,15 +1,42 @@
 'use strict'
 
 angular.module('Services', [])
-  .factory('IRC', function () {
+  .factory('Emitter', function () {
+    var Emitter = function () {
+
+      var _events = {};
+
+      this.on = function (names, listener) {
+        var _names = names;
+        if (typeof names === 'string') { _names = [ names ] }
+
+        _names.forEach(function (name) {
+          if (!_events[name]) _events[name] = [];
+          _events[name].push (listener);
+        });
+      }
+
+      this.emit = function (name, data) {
+        var fns = _events[name];
+        fns.forEach(function (fn) {
+          fn(data);
+        });
+      }
+
+      this.clear = function () {
+        _events = {};
+      }
+
+    }
+    return new Emitter;
+  })
+  .factory('IRC', [ 'Emitter', function (Emitter) {
     var IRC = function () {
       var _server = '';
       var _user = '';
       var _rooms = [];
       var _isJoined = false;
       
-      var _events = {};
-
       var primus = Primus.connect();
       primus.on('data', function (data) {
         switch (data.action) {
@@ -18,7 +45,7 @@ angular.module('Services', [])
               _user = data.user;
               _isJoined = true;
               // Special case for self join. Other command that has user maybe use the same pattern.
-              _emit('self.join', data);
+              Emitter.emit('self.join', data);
               return;
             }
             break;
@@ -29,16 +56,9 @@ angular.module('Services', [])
             break;
         }
 
-        _emit(data.action, data);
-        _emit('postdata');
+        Emitter.emit(data.action, data);
+        Emitter.emit('postdata');
       });
-
-      var _emit = function (name, data) {
-        var fns = _events[name];
-        fns.forEach(function (fn) {
-          fn(data);
-        });
-      }
 
       // Moved this model outside.
       var Message = function (room, message) {
@@ -59,7 +79,7 @@ angular.module('Services', [])
               message = '\u0001ACTION '+message.replace(/^\/me /, '')+'\u0001';
             }
             primus.write({ action: 'say', room: _room, message: message });
-            _emit('send', { from: _user, room: this.room, message: message });
+            Emitter.emit('send', { from: _user, room: this.room, message: message });
           }
         };
       }
@@ -78,16 +98,6 @@ angular.module('Services', [])
       Object.defineProperty(this, 'user', {
         get: function () { return _user; }
       });
-
-      this.on = function (names, fb) {
-        var _names = names;
-        if (typeof names === 'string') { _names = [ names ] }
-
-        _names.forEach(function (name) {
-          if (!_events[name]) _events[name] = [];
-          _events[name].push (fb);
-        });
-      }
 
       this.clear = function () {
         // Clear all events
@@ -117,4 +127,4 @@ angular.module('Services', [])
 
     var _instance = new IRC;
     return _instance;
-  });
+  }]);
