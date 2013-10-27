@@ -136,7 +136,7 @@ angular.module('Services', [])
       this.send = function (text) {
         var message = new Message(this.room, text);
         primus.write(message.data);
-        if (message.action === 'say') {
+        if (message.data.action === 'say') {
           Emitter.emit('send', { from: _user, room: this.room, message: message });
         }
       }
