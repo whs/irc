@@ -134,10 +134,10 @@ angular.module('Services', [])
       }
 
       this.send = function (text) {
-        var message = new Message(this.room, text);
-        primus.write(message.data);
-        if (message.data.action === 'say') {
-          Emitter.emit('send', { from: _user, room: this.room, message: message });
+        var data = new Message(this.room, text).data;
+        primus.write(data);
+        if (data.action === 'say') {
+          Emitter.emit('send', { from: _user, room: this.room, message: data.message });
         }
       }
 
