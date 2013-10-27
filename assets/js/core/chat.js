@@ -174,6 +174,9 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         $scope.message = name + ', ';
       }
       $scope.send = function () {
+        if($scope.message.length === 0){
+          return;
+        }
         IRC.send($scope.message);
         $scope.message = '';
       }
