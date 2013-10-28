@@ -116,6 +116,9 @@ primus.on('connection', function (spark) {
         connection.addListener('nick', function (oldName, newName, room) {
           spark.write({ action: 'nick', room: room, oldname: oldName, newname: newName });
         });
+        connection.addListener('topic', function (channel, topic, nick, message) {
+          spark.write({ action: 'topic', channel: channel, topic: topic, nick: nick, message: message });
+        });
         connection.addListener('error', function (message) {
           console.error ('error: ' + JSON.stringify(message));
         });

@@ -16,6 +16,10 @@ block content
               button.small.submit Login
 
     script(type='text/ng-template', id='chat.html')
+      .topic
+        .row
+          strong(ng-bind='room')
+          span(ng-bind='topic')
       .contents
         .row
           .small-8.columns.conversations
@@ -24,15 +28,18 @@ block content
                 .chat(ng-switch on='message.type')
                   .type-message.line(ng-switch-when='message')
                     span.timestamp {{message.time}}
-                    span.from(class='color-{{message.user|ircColor}}',ng-click='fillname(message.user)') {{message.user}}
-                    span.text(irc-color='message.text')
+                    .text-container
+                      span.from(class='color-{{message.user|ircColor}}',ng-click='fillname(message.user)') {{message.user}}
+                      span.text(irc-color='message.text')
                   .type-action.line(ng-switch-when='action')
                     span.timestamp {{message.time}}
-                    span.from(class='color-{{message.user|ircColor}}',ng-click='fillname(message.user)') {{message.user}}
-                    span.text(irc-color='message.text')
+                    .text-container
+                      span.from(class='color-{{message.user|ircColor}}',ng-click='fillname(message.user)') {{message.user}}
+                      span.text(irc-color='message.text')
                   .type-command.line(ng-switch-when='command')
                     span.timestamp {{message.time}}
-                    span.text {{message.text}}
+                    .text-container
+                      span.text {{message.text}}
           .small-4.columns.members
             ul
               li(ng-repeat='(name, options) in members track by name')

@@ -115,6 +115,10 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
       }
       document.title = IRC.room;
 
+      $scope.room = IRC.room;
+      $scope.topic = 'Connecting...';
+      var mentionCount = 0;
+
       // All listeners are here.
       Emitter.on('self.join', function (data) {
         $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joined ' + IRC.room }); 
@@ -135,6 +139,8 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
             body: data.from + ': ' + data.message,
             icon: '/assets/img/icon.png' // required
           });
+          mentionCount++;
+          Tinycon.setBubble(mentionCount);
         }
 
         if(S(data.message).startsWith('\u0001ACTION') && S(data.message).endsWith('\u0001')){
@@ -150,6 +156,10 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         var value = $scope.members[data.oldname];
         delete $scope.members[data.oldname];
         $scope.members[data.newname] = value;
+      });
+      Emitter.on('topic', function (data) {
+        $scope.topic = data.topic;
+        $scope.messages.push({ type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Topic: ' + data.topic + ' set by ' + data.nick });
       });
       Emitter.on('postdata', function () {
         $scope.$apply();
@@ -185,6 +195,19 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         }
       });
 
+      document.addEventListener('mousemove', function(){
+        if(mentionCount > 0){
+          mentionCount = 0;
+          Tinycon.setBubble(mentionCount);
+        }
+      }, false);
+
+      // Initial messages
+      $scope.messages = [
+        { type: 'command', time: moment(new Date()).format('hh:mm'), text: 'Joining ' + IRC.room }
+      ];
+      document.title = IRC.room;
+      $scope.members = {};
       $scope.fillname = function (name) {
         $scope.message = name + ', ';
       }
@@ -198,6 +221,9 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
         return '';
       }
       $scope.send = function () {
+        if($scope.message.length === 0){
+          return;
+        }
         IRC.send($scope.message);
         $scope.message = '';
       }

@@ -6,6 +6,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 
   #chat {
     height: 100%;
@@ -16,7 +17,7 @@ html, body {
 
       .contents {
         height: 100%;
-        padding-bottom: 60px;
+        padding-bottom: 85px;
 
         & > div {
           height: 100%;
@@ -28,6 +29,7 @@ html, body {
 
           ul {
             list-style: none;
+            margin-bottom: 0;
 
             li {
               color: #666;
@@ -37,10 +39,18 @@ html, body {
               &.mention:nth-child(even) { background: #fff826; }
 
               .timestamp { 
-                margin-right: 5px;
+                display: block;
+                float: left;
+                width: 40px;
+                font-size: 10pt;
                 color: #ccc;
+                margin-top: 3px;
                 &:after { content: "]"; }
                 &:before { content: "["; }
+              }
+              .text-container {
+                display: block;
+                padding-left: 40+5px;
               }
               .from { 
                 margin-right: 10px;
@@ -103,6 +113,25 @@ html, body {
           }
           // - ul
         }
+      }
+      .topic {
+        background: #EEE;
+        color: maroon;
+        height: 30px !important;
+        padding: 5px 10px;
+        box-sizing: border-box;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+
+        &:hover{
+          overflow: visible;
+          text-overflow: initial;
+          white-space: normal;
+        }
+
+        strong { margin-right: 5px; }
+        strong:after { content: ": "; }
       }
     }
     // - #view
