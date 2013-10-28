@@ -80,11 +80,11 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
             }else{
               out += cur;
             }
-          };
+          }
           if(hasOpenTag){
             out += "</span>";
           }
-          out = twttr.txt.autoLinkUrlsCustom(out);
+          out = twttr.txt.autoLinkUrlsCustom(out, { 'target':'_blank' });
           element.html(out);
         };
         scope.$watch(attrs.ircColor, function(val){
@@ -92,7 +92,7 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
           update();
         });
       }
-    }
+    };
   }])
   .controller('Login', [ '$scope', '$location', 'Emitter', 'IRC', 
     function ($scope, $location, Emitter, IRC) {
