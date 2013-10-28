@@ -84,6 +84,7 @@ angular.module('chat', [ 'ngRoute', 'Services' ])
           if(hasOpenTag){
             out += "</span>";
           }
+          out = twttr.txt.autoLinkUrlsCustom(out);
           element.html(out);
         };
         scope.$watch(attrs.ircColor, function(val){

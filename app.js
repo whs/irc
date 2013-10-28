@@ -66,8 +66,14 @@ primus.on('connection', function (spark) {
       var sha256 = crypto.createHash('sha256');
       sha256.update(spark.address.ip);
       var username = sha256.digest('base64').substr(0, 9);
+      var firedConnect = false;
 
       var connect = function(hostname){
+        if(firedConnect){
+          return false;
+        }
+        firedConnect = true;
+
         var connection = new irc.Client(server, user, { 
           userName: username,
           realName: hostname+' via llunchat'
@@ -83,7 +89,7 @@ primus.on('connection', function (spark) {
           connection.say('NickServ', 'IDENTIFY ' + data.nickserv);
           var nickservTimeout = setTimeout(function(){
             nickservCb('NickServ');
-          }, 2000);
+          }, 1000);
           var nickservCb = function(from){
             if(from === 'NickServ'){
               connection.join(room);
@@ -124,8 +130,14 @@ primus.on('connection', function (spark) {
         });
       }
 
+      var dnsTimeout = setTimeout(function(){
+        console.error("DNS Timeout for "+spark.address.ip);
+        connect(spark.address.ip);
+      }, 500);
+
       Q.nfcall(dns.reverse, spark.address.ip)
         .then(function (hostname) {
+          clearTimeout(dnsTimeout);
           if (hostname.length > 0) {
             connect (hostname[0]);
           }
@@ -134,8 +146,9 @@ primus.on('connection', function (spark) {
           }
         })
         .fail(function () {
+          clearTimeout(dnsTimeout);
           connect(spark.address.ip);
-        });
+        }).done();
 
     }
     else if (data.action === 'say') {
