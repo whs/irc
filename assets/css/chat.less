@@ -90,6 +90,29 @@ html, body {
         position: absolute;
         bottom: 0;
         width: 100%;
+
+        .autocomplete {
+
+          ul {
+            list-style: none;
+            border: 1px solid black;
+            background: white;
+            padding: 0;
+            margin: 0;
+
+            li {
+              padding: 2px 10px;
+              color: black;
+
+              &.selected {
+                background: #0275b3;
+                color: white;
+              }
+            }
+            // - li
+          }
+          // - ul
+        }
       }
       .topic {
         background: #EEE;
